@@ -1,46 +1,6 @@
-import { Product } from '../types';
+import { Product, Sale } from '../types';
 
-const API_URL = 'http://localhost:3000/api';
-
-const MOCK_PRODUCTS: Product[] = [
-    {
-        id: '1',
-        name: 'Ripit 5000',
-        sku: 'RPT-5000',
-        price: 150000,
-        stockQuantity: 10,
-        availabilityType: 'STOCK',
-        description: 'High performance industrial saw'
-    },
-    {
-        id: '2',
-        name: 'Diamond Blade',
-        sku: 'DMD-BLD',
-        price: 80000,
-        stockQuantity: 50,
-        availabilityType: 'STOCK',
-        description: 'Premium diamond blade for cutting concrete'
-    },
-    {
-        id: '3',
-        name: 'Safety Kit',
-        sku: 'SFT-KIT',
-        price: 45000,
-        stockQuantity: 100,
-        availabilityType: 'STOCK',
-        description: 'Complete safety gear set'
-    },
-    {
-        id: '4',
-        name: 'Custom Motor',
-        sku: 'CST-MTR',
-        price: 500000,
-        stockQuantity: 0,
-        availabilityType: 'MADE_TO_ORDER',
-        estimatedDays: 15,
-        description: 'Custom built motor for specialized machinery'
-    }
-];
+const API_URL = '/api';
 
 export const fetchProducts = async (): Promise<Product[]> => {
     const response = await fetch(`${API_URL}/sales/products`);
@@ -57,15 +17,24 @@ export const searchProducts = async (query: string): Promise<Product[]> => {
 };
 
 export const createSale = async (saleData: any) => {
-    console.log('Creating sale:', saleData);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { id: 'mock-sale-id', ...saleData, status: 'PENDING' };
+    const response = await fetch(`${API_URL}/sales`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(saleData),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create sale');
+    }
+
+    return response.json();
 };
 
-export const fetchSales = async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-        { id: '101', total: 230000, status: 'COMPLETED', createdAt: new Date().toISOString() },
-        { id: '102', total: 45000, status: 'PENDING', createdAt: new Date().toISOString() },
-    ];
+export const fetchSales = async (): Promise<Sale[]> => {
+    const response = await fetch(`${API_URL}/sales`);
+    if (!response.ok) throw new Error('Failed to fetch sales');
+    return response.json();
 };

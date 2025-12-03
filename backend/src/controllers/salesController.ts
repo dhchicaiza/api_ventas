@@ -42,9 +42,9 @@ export const createSale = async (req: Request, res: Response) => {
         // In a real scenario, we would call Inventory API here
         // await axios.post(`${process.env.INVENTORY_API_URL}/stock/reserve`, { items: data.items });
 
-        // 2. Create Customer (or find existing - simplified here to always create/update)
-        const customer = await prisma.customer.create({
-            data: data.customer,
+        // 2. Create Person (or find existing - simplified here to always create/update)
+        const person = await prisma.person.create({
+            data: data.customer, // Frontend still sends 'customer' key
         });
 
         // 3. Calculate Total
@@ -53,7 +53,7 @@ export const createSale = async (req: Request, res: Response) => {
         // 4. Create Sale
         const sale = await prisma.sale.create({
             data: {
-                customerId: customer.id,
+                personId: person.id,
                 total: total,
                 deliveryMethod: data.deliveryMethod,
                 status: 'PENDING',
@@ -67,7 +67,7 @@ export const createSale = async (req: Request, res: Response) => {
             },
             include: {
                 items: true,
-                customer: true,
+                person: true,
             },
         });
 
@@ -104,7 +104,7 @@ export const getSales = async (req: Request, res: Response) => {
     try {
         const sales = await prisma.sale.findMany({
             include: {
-                customer: true,
+                person: true,
                 items: true,
             },
             orderBy: {
@@ -130,7 +130,7 @@ export const getSale = async (req: Request, res: Response) => {
         const sale = await prisma.sale.findUnique({
             where: { id },
             include: {
-                customer: true,
+                person: true,
                 items: true,
             },
         });

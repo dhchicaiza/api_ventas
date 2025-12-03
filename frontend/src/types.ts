@@ -27,3 +27,24 @@ export interface CartItem {
         expiresAt: string;
     };
 }
+
+export interface SaleItem {
+    id: string;
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+}
+
+export interface Sale {
+    id: string;
+    total: number;
+    status: string;
+    deliveryMethod: string;
+    createdAt: string;
+    person?: {
+        name: string;
+        email: string;
+        address: string;
+    };
+    items?: SaleItem[];
+}

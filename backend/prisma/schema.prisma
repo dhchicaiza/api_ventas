@@ -8,19 +8,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Customer {
+model Person {
   id        String   @id @default(uuid())
   name      String
   email     String
   address   String
   sales     Sale[]
   createdAt DateTime @default(now())
+
+  @@map("personas")
 }
 
 model Sale {
   id             String      @id @default(uuid())
-  customer       Customer    @relation(fields: [customerId], references: [id])
-  customerId     String
+  person         Person      @relation(fields: [personId], references: [id])
+  personId       String
   total          Decimal
   status         SaleStatus  @default(PENDING)
   deliveryMethod DeliveryMethod

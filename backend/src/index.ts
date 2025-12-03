@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import salesRoutes from './routes/salesRoutes';
+import personRoutes from './routes/personRoutes';
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/sales', salesRoutes);
+app.use('/api/persons', personRoutes);
 
 app.get('/', (req, res) => {
     res.send('Sales API is running');
