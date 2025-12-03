@@ -19,6 +19,7 @@ const createSaleSchema = z.object({
         unitPrice: z.number().min(0),
     })),
     deliveryMethod: z.enum(['PICKUP', 'DISPATCH']),
+    status: z.enum(['PENDING', 'COMPLETED']).optional().default('COMPLETED'),
 });
 
 /**
@@ -58,14 +59,21 @@ export const createSale = async (req: Request, res: Response) => {
         // 3. Calculate Total
         const total = data.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
 
-        // 4. Create Sale as COMPLETED (finalized immediately)
+        // 4. Determine expiration based on status
+        const expiresAt = data.status === 'PENDING' ? (() => {
+            const expiration = new Date();
+            expiration.setMinutes(expiration.getMinutes() + 15);
+            return expiration;
+        })() : null;
+
+        // 5. Create Sale
         const sale = await prisma.sale.create({
             data: {
                 personId: person.id,
                 total: total,
                 deliveryMethod: data.deliveryMethod,
-                status: 'COMPLETED',
-                expiresAt: null, // No expiration for completed sales
+                status: data.status || 'COMPLETED',
+                expiresAt: expiresAt,
                 items: {
                     create: data.items.map(item => ({
                         productId: item.productId,

@@ -89,7 +89,7 @@ export const NewSale: React.FC = () => {
         setDeliveryMethod('PICKUP');
     };
 
-    const handleConfirmSale = async () => {
+    const handleConfirmSale = async (status: 'PENDING' | 'COMPLETED' = 'COMPLETED') => {
         if (!selectedPersonId) {
             alert('Por favor selecciona una persona');
             return;
@@ -110,6 +110,7 @@ export const NewSale: React.FC = () => {
                     unitPrice: item.unitPrice,
                 })),
                 deliveryMethod,
+                status,
                 customer: {
                     name: selectedPerson.name,
                     email: selectedPerson.email,
@@ -119,7 +120,10 @@ export const NewSale: React.FC = () => {
             };
 
             await createSale(saleData);
-            alert('¡Venta finalizada exitosamente!');
+            const message = status === 'COMPLETED'
+                ? '¡Venta finalizada exitosamente!'
+                : '¡Venta guardada como pendiente!';
+            alert(message);
             setCartItems([]);
             handleCloseCheckout();
         } catch (error) {
@@ -253,13 +257,21 @@ export const NewSale: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={handleCloseCheckout}
-                                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                                className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="button"
-                                onClick={handleConfirmSale}
+                                onClick={() => handleConfirmSale('PENDING')}
+                                disabled={isProcessing || !selectedPersonId}
+                                className="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                            >
+                                {isProcessing ? 'Guardando...' : 'Guardar como Pendiente'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleConfirmSale('COMPLETED')}
                                 disabled={isProcessing || !selectedPersonId}
                                 className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                             >
