@@ -1,0 +1,21 @@
+{
+  "name": "dispatch-api-mock",
+  "version": "1.0.0",
+  "description": "Mock API for Dispatch management - Testing purposes",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": ["dispatch", "delivery", "mock", "api", "testing"],
+  "author": "Sales Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

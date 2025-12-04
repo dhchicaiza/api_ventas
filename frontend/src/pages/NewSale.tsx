@@ -20,12 +20,25 @@ export const NewSale: React.FC = () => {
     const [selectedPersonId, setSelectedPersonId] = useState<string>('');
     const [deliveryMethod, setDeliveryMethod] = useState<'PICKUP' | 'DISPATCH'>('PICKUP');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
+    const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
 
     useEffect(() => {
         if (showCheckoutModal) {
             fetchPersons();
         }
     }, [showCheckoutModal]);
+
+    useEffect(() => {
+        if (deliveryMethod === 'DISPATCH' && selectedPersonId) {
+            const selectedPerson = persons.find(p => p.id === selectedPersonId);
+            if (selectedPerson) {
+                checkDeliveryAvailability(selectedPerson.address);
+            }
+        } else {
+            setDeliveryDate(null);
+        }
+    }, [deliveryMethod, selectedPersonId, persons]);
 
     const fetchPersons = async () => {
         try {
@@ -89,6 +102,26 @@ export const NewSale: React.FC = () => {
         setDeliveryMethod('PICKUP');
     };
 
+    const checkDeliveryAvailability = async (address: string) => {
+        setIsCheckingDelivery(true);
+        try {
+            const response = await fetch('/api/sales/check-delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setDeliveryDate(data.estimatedDeliveryDate);
+            }
+        } catch (error) {
+            console.error('Error checking delivery:', error);
+        } finally {
+            setIsCheckingDelivery(false);
+        }
+    };
+
     const handleConfirmSale = async (status: 'PENDING' | 'COMPLETED' = 'COMPLETED') => {
         if (!selectedPersonId) {
             alert('Por favor selecciona una persona');
@@ -111,6 +144,7 @@ export const NewSale: React.FC = () => {
                 })),
                 deliveryMethod,
                 status,
+                deliveryDate: deliveryDate || undefined,
                 customer: {
                     name: selectedPerson.name,
                     email: selectedPerson.email,
@@ -225,6 +259,37 @@ export const NewSale: React.FC = () => {
                                         <div className="text-sm text-gray-600">Costo según ubicación</div>
                                     </button>
                                 </div>
+
+                                {/* Delivery Date Information */}
+                                {deliveryMethod === 'DISPATCH' && selectedPersonId && (
+                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        {isCheckingDelivery ? (
+                                            <div className="flex items-center text-blue-700">
+                                                <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Consultando disponibilidad de entrega...
+                                            </div>
+                                        ) : deliveryDate ? (
+                                            <div className="text-blue-700">
+                                                <div className="font-semibold">📦 Fecha estimada de entrega:</div>
+                                                <div className="text-lg mt-1">
+                                                    {new Date(deliveryDate).toLocaleDateString('es-ES', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-blue-700">
+                                                Selecciona un cliente para ver la fecha de entrega
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Order Summary */}

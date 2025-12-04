@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createSale, getSales, getSale, getProducts, completeSale, cleanupExpiredSales } from '../controllers/salesController';
+import { createSale, getSales, getSale, getProducts, completeSale, cleanupExpiredSales, checkDeliveryAvailabilityController } from '../controllers/salesController';
 
 const router = Router();
 
@@ -9,5 +9,6 @@ router.get('/products', getProducts);
 router.get('/:id', getSale);
 router.patch('/:id/complete', completeSale);
 router.post('/cleanup-expired', cleanupExpiredSales);
+router.post('/check-delivery', checkDeliveryAvailabilityController);
 
 export default router;

@@ -20,6 +20,7 @@ const createSaleSchema = z.object({
     })),
     deliveryMethod: z.enum(['PICKUP', 'DISPATCH']),
     status: z.enum(['PENDING', 'COMPLETED']).optional().default('COMPLETED'),
+    deliveryDate: z.string().optional(),
 });
 
 /**
@@ -88,12 +89,36 @@ export const createSale = async (req: Request, res: Response) => {
             },
         });
 
-        // 5. Handle Dispatch
-        if (data.deliveryMethod === 'DISPATCH') {
-            // Call Dispatch API (Mocked)
-            // const dispatchRes = await axios.post(`${process.env.DISPATCH_API_URL}/dispatches`, { saleId: sale.id, address: customer.address });
-            // await prisma.sale.update({ where: { id: sale.id }, data: { dispatchId: dispatchRes.data.id } });
-            console.log('Dispatch created for sale:', sale.id);
+        // 6. Handle Dispatch
+        if (data.deliveryMethod === 'DISPATCH' && data.status === 'COMPLETED') {
+            try {
+                const { createDispatch } = await import('../services/dispatchService');
+
+                const dispatchData = {
+                    saleId: sale.id,
+                    customerName: person.name,
+                    customerAddress: person.address,
+                    customerEmail: person.email,
+                    deliveryDate: data.deliveryDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    items: data.items.map(item => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                    })),
+                };
+
+                const dispatchResponse = await createDispatch(dispatchData);
+
+                // Update sale with dispatch ID
+                await prisma.sale.update({
+                    where: { id: sale.id },
+                    data: { dispatchId: dispatchResponse.dispatchId },
+                });
+
+                console.log('Dispatch created:', dispatchResponse.dispatchId);
+            } catch (error) {
+                console.error('Error creating dispatch:', error);
+                // Continue even if dispatch fails
+            }
         }
 
         res.status(201).json(sale);
@@ -270,6 +295,27 @@ export const cleanupExpiredSales = async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('Error cleaning up expired sales:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+/**
+ * Check delivery availability for a given address
+ */
+export const checkDeliveryAvailabilityController = async (req: Request, res: Response) => {
+    try {
+        const { address } = req.body;
+
+        if (!address) {
+            return res.status(400).json({ error: 'Address is required' });
+        }
+
+        const { checkDeliveryAvailability } = await import('../services/dispatchService');
+        const availability = await checkDeliveryAvailability(address);
+
+        res.json(availability);
+    } catch (error) {
+        console.error('Error checking delivery availability:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
