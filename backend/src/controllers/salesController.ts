@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const prisma = new PrismaClient();
 
-// Schemas
+// Esquemas de validación
 const createSaleSchema = z.object({
     customer: z.object({
         name: z.string(),
@@ -41,33 +41,73 @@ export const createSale = async (req: Request, res: Response) => {
     try {
         const data = createSaleSchema.parse(req.body);
 
-        // 1. Validate Stock (Mocked)
-        // In a real scenario, we would call Inventory API here
-        // await axios.post(`${process.env.INVENTORY_API_URL}/stock/reserve`, { items: data.items });
+        // 1. Validar productos y calcular tiempos de fabricación
+        let totalManufacturingDays = 0;
+        let hasManufacturingProducts = false;
 
-        // 2. Find or Create Person
+        for (const item of data.items) {
+            try {
+                // Obtener información del producto desde inventario
+                const inventoryProductId = item.productId.replace('prod-', '').toUpperCase();
+                const productResponse = await axios.get(
+                    `${process.env.INVENTORY_API_URL}/api/v1/products/${item.productId}`
+                );
+                const product = productResponse.data;
+
+                // Verificar si es producto en fabricación
+                if (product.availabilityType === 'MANUFACTURING') {
+                    hasManufacturingProducts = true;
+
+                    // Si la venta es PICKUP, se permite pero este item específico se manejará como DESPACHO
+                    // Se requiere que el cliente tenga dirección válida (validada por esquema)
+
+                    // Acumular el mayor tiempo de fabricación
+                    if (product.estimatedDays && product.estimatedDays > totalManufacturingDays) {
+                        totalManufacturingDays = product.estimatedDays;
+                    }
+                }
+            } catch (error) {
+                console.error(`[INVENTARIO] Error al consultar producto ${item.productId}:`, error);
+                // Continuar si no se puede verificar - no bloquear la venta
+            }
+        }
+
+        // Calcular fecha de entrega considerando tiempo de fabricación
+        // Calcular fecha de entrega considerando tiempo de fabricación
+        // Si hay productos de fabricación, siempre se calcula fecha de entrega para envío
+        let calculatedDeliveryDate = data.deliveryDate;
+        if (hasManufacturingProducts) {
+            const DELIVERY_DAYS = 3; // Días estimados de despacho
+            const totalDays = totalManufacturingDays + DELIVERY_DAYS;
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + totalDays);
+            calculatedDeliveryDate = deliveryDate.toISOString();
+            console.log(`[FABRICACIÓN] Producto en fabricación detectado. Tiempo total: ${totalManufacturingDays} días fabricación + ${DELIVERY_DAYS} días despacho = ${totalDays} días`);
+        }
+
+        // 2. Buscar o Crear Persona
         let person = await prisma.person.findUnique({
             where: { email: data.customer.email },
         });
 
         if (!person) {
-            // Create new person if doesn't exist
+            // Crear nueva persona si no existe
             person = await prisma.person.create({
                 data: data.customer,
             });
         }
 
-        // 3. Calculate Total
+        // 3. Calcular Total
         const total = data.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
 
-        // 4. Determine expiration based on status
+        // 4. Determinar expiración según el estado
         const expiresAt = data.status === 'PENDING' ? (() => {
             const expiration = new Date();
             expiration.setMinutes(expiration.getMinutes() + 15);
             return expiration;
         })() : null;
 
-        // 5. Create Sale
+        // 5. Crear Venta
         const sale = await prisma.sale.create({
             data: {
                 personId: person.id,
@@ -75,6 +115,7 @@ export const createSale = async (req: Request, res: Response) => {
                 deliveryMethod: data.deliveryMethod,
                 status: data.status || 'COMPLETED',
                 expiresAt: expiresAt,
+                deliveryDate: calculatedDeliveryDate ? new Date(calculatedDeliveryDate) : null,
                 items: {
                     create: data.items.map(item => ({
                         productId: item.productId,
@@ -89,8 +130,92 @@ export const createSale = async (req: Request, res: Response) => {
             },
         });
 
-        // 6. Handle Dispatch
+        // 6. Manejar Reserva para pedidos PENDING
+        if (data.status === 'PENDING') {
+            try {
+                // Llamar a la API de Inventario para reservar productos por cada item
+                for (const item of data.items) {
+                    // Transformar ID de producto: 'prod-s1' -> 'S1' (formato API de inventario)
+                    const inventoryProductId = item.productId.replace('prod-', '').toUpperCase();
+
+                    await axios.post(`${process.env.INVENTORY_API_URL}/api/productos/reservas`, {
+                        id_producto: inventoryProductId,
+                        cantidad: item.quantity
+                    });
+                    console.log(`[INVENTARIO] Producto reservado: ${inventoryProductId} x ${item.quantity}`);
+                }
+            } catch (error) {
+                console.error('[INVENTARIO] Error al reservar productos:', error);
+                // Continuar aunque falle la reserva - la venta ya fue creada
+            }
+        }
+
+        // 7. Manejar descuento de stock para pedidos PICKUP
+        // NOTA: Para ventas mixtas, solo procesar items que NO sean de fabricación aquí
+        // Aunque no tenemos el tipo de producto guardado en SaleItem, consultamos availabilityType de nuevo o asumimos lógica
+        // Para simplificar y evitar múltiples llamadas, procesaremos TODOS los items como Retiro SI es PICKUP
+        // EXCEPTO si implementamos lógica de separación.
+
+        // Nueva Lógica Mixta:
+        // Si es PICKUP:
+        // - Items STOCK -> Retiro
+        // - Items MANUFACTURING -> Despacho
+
+        if (data.deliveryMethod === 'PICKUP' && data.status === 'COMPLETED') {
+            try {
+                for (const item of data.items) {
+                    const inventoryProductId = item.productId.replace('prod-', '').toUpperCase();
+
+                    // Necesitamos saber el tipo. Para optimizar, podríamos haberlo guardado, 
+                    // pero haremos consulta rápida o asumiremos por prefijo si fuera posible (no lo es).
+                    // Hacemos consulta al inventario
+                    const productResponse = await axios.get(`${process.env.INVENTORY_API_URL}/api/v1/products/${item.productId}`);
+                    const availabilityType = productResponse.data.availabilityType;
+
+                    if (availabilityType === 'MANUFACTURING') {
+                        // Es fabricación -> Crear DESPACHO (aunque la venta sea PICKUP)
+                        await axios.post(`${process.env.INVENTORY_API_URL}/api/productos/despachos`, {
+                            id_producto: inventoryProductId,
+                            cantidad: item.quantity
+                        });
+                        console.log(`[INVENTARIO] Item de Fabricación en venta PICKUP -> Marcado para despacho: ${inventoryProductId}`);
+                    } else {
+                        // Es stock -> Crear RETIRO
+                        await axios.post(`${process.env.INVENTORY_API_URL}/api/productos/retiros`, {
+                            id_producto: inventoryProductId,
+                            cantidad: item.quantity,
+                            metodo_entrega: 'tienda'
+                        });
+                        console.log(`[INVENTARIO] Item de Stock en venta PICKUP -> Stock descontado: ${inventoryProductId}`);
+                    }
+                }
+            } catch (error) {
+                console.error('[INVENTARIO] Error al procesar items mixtos en PICKUP:', error);
+            }
+        }
+
+        // 8. Manejar pedidos DISPATCH (Envío a domicilio) - notificar inventario y crear despacho
         if (data.deliveryMethod === 'DISPATCH' && data.status === 'COMPLETED') {
+            // 8a. Notificar a la API de Inventario para marcar productos para despacho
+            try {
+                for (const item of data.items) {
+                    // Transformar ID de producto: 'prod-s1' -> 'S1' (formato API de inventario)
+                    const inventoryProductId = item.productId.replace('prod-', '').toUpperCase();
+
+                    await axios.post(`${process.env.INVENTORY_API_URL}/api/productos/despachos`, {
+                        id_producto: inventoryProductId,
+                        cantidad: item.quantity
+                    });
+                    console.log(`[INVENTARIO] Marcado para despacho: ${inventoryProductId} x ${item.quantity}`);
+                }
+            } catch (error) {
+                console.error('[INVENTARIO] Error al marcar productos para despacho:', error);
+                // Continuar aunque falle la actualización de inventario
+            }
+
+            // 8b. Crear solicitud de Despacho (PENDIENTE - esperando API real de despachos)
+            // TODO: Descomentar cuando la API real de despachos esté disponible
+            /*
             try {
                 const { createDispatch } = await import('../services/dispatchService');
 
@@ -109,7 +234,7 @@ export const createSale = async (req: Request, res: Response) => {
 
                 const dispatchResponse = await createDispatch(dispatchData);
 
-                // Update sale with dispatch ID
+                // Actualizar venta con ID de despacho
                 await prisma.sale.update({
                     where: { id: sale.id },
                     data: { dispatchId: dispatchResponse.dispatchId },
@@ -118,11 +243,22 @@ export const createSale = async (req: Request, res: Response) => {
                 console.log('Dispatch created:', dispatchResponse.dispatchId);
             } catch (error) {
                 console.error('Error creating dispatch:', error);
-                // Continue even if dispatch fails
             }
+            */
+            console.log('[DESPACHO] Servicio de despacho pendiente - esperando API real');
         }
 
-        res.status(201).json(sale);
+        // Incluir información de fabricación en la respuesta si aplica
+        const saleResponse = {
+            ...sale,
+            manufacturingInfo: hasManufacturingProducts ? {
+                hasManufacturingProducts: true,
+                manufacturingDays: totalManufacturingDays,
+                calculatedDeliveryDate: calculatedDeliveryDate
+            } : undefined
+        };
+
+        res.status(201).json(saleResponse);
     } catch (error) {
         console.error(error);
         if (error instanceof z.ZodError) {
@@ -181,7 +317,24 @@ export const getSale = async (req: Request, res: Response) => {
         if (!sale) {
             return res.status(404).json({ error: 'Sale not found' });
         }
-        res.json(sale);
+
+        // Enriquecer items con datos del inventario (para saber si es fabricación/stock)
+        const itemsWithDetails = await Promise.all(sale.items.map(async (item) => {
+            try {
+                const productResponse = await axios.get(
+                    `${process.env.INVENTORY_API_URL}/api/v1/products/${item.productId}`
+                );
+                return {
+                    ...item,
+                    product: productResponse.data // Incluimos detalles completos (availabilityType, estimatedDays)
+                };
+            } catch (error) {
+                console.error(`Error fetching details for item ${item.productId}`, error);
+                return item;
+            }
+        }));
+
+        res.json({ ...sale, items: itemsWithDetails });
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -209,9 +362,18 @@ export const getProducts = async (req: Request, res: Response) => {
             params = { query: search };
         }
 
-        // Proxy to Inventory API
+        // Proxy hacia la API de Inventario
         const response = await axios.get(url, { params });
-        res.json(response.data);
+
+        // Aplicar margen de utilidad del 16% a los precios
+        const PROFIT_MARGIN = 0.16;
+        const productsWithMargin = response.data.data?.map((product: any) => ({
+            ...product,
+            costPrice: product.price, // Mantener precio original como costo
+            price: Math.round(product.price * (1 + PROFIT_MARGIN)), // Aplicar margen del 16%
+        })) || [];
+
+        res.json({ ...response.data, data: productsWithMargin });
     } catch (error) {
         console.error('Error fetching products from Inventory API:', error);
         res.status(500).json({ error: 'Failed to fetch products' });
@@ -219,7 +381,7 @@ export const getProducts = async (req: Request, res: Response) => {
 };
 
 /**
- * Complete a pending sale
+ * Completar una venta pendiente
  */
 export const completeSale = async (req: Request, res: Response) => {
     try {
@@ -237,7 +399,7 @@ export const completeSale = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Sale is not pending' });
         }
 
-        // Check if sale has expired
+        // Verificar si la venta ha expirado
         if (sale.expiresAt && new Date() > sale.expiresAt) {
             return res.status(400).json({ error: 'Sale has expired' });
         }
@@ -246,7 +408,7 @@ export const completeSale = async (req: Request, res: Response) => {
             where: { id },
             data: {
                 status: 'COMPLETED',
-                expiresAt: null, // Remove expiration once completed
+                expiresAt: null, // Eliminar expiración una vez completada
             },
             include: {
                 items: true,
@@ -262,14 +424,14 @@ export const completeSale = async (req: Request, res: Response) => {
 };
 
 /**
- * Cleanup expired pending sales
- * This should be called periodically (e.g., via cron job)
+ * Limpiar ventas pendientes expiradas
+ * Esto debe llamarse periódicamente (ej: mediante cron job)
  */
 export const cleanupExpiredSales = async (req: Request, res: Response) => {
     try {
         const now = new Date();
 
-        // Find all expired pending sales
+        // Buscar todas las ventas pendientes expiradas
         const expiredSales = await prisma.sale.findMany({
             where: {
                 status: 'PENDING',
@@ -279,7 +441,7 @@ export const cleanupExpiredSales = async (req: Request, res: Response) => {
             },
         });
 
-        // Delete expired sales and their items
+        // Eliminar ventas expiradas y sus items
         const deletedCount = await prisma.sale.deleteMany({
             where: {
                 status: 'PENDING',
@@ -301,7 +463,7 @@ export const cleanupExpiredSales = async (req: Request, res: Response) => {
 };
 
 /**
- * Check delivery availability for a given address
+ * Verificar disponibilidad de entrega para una dirección dada
  */
 export const checkDeliveryAvailabilityController = async (req: Request, res: Response) => {
     try {

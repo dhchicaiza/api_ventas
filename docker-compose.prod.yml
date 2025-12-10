@@ -20,11 +20,10 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/sales_db?schema=public
       PORT: 3000
-      INVENTORY_API_URL: http://inventory-api:3001
+      INVENTORY_API_URL: http://ec2-44-197-195-198.compute-1.amazonaws.com:5050
       DISPATCH_API_URL: http://dispatch-api:3002
     depends_on:
       - postgres
-      - inventory-api
       - dispatch-api
 
   loadbalancer:

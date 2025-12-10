@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { fetchSales } from '../services/api';
-import { DollarSign, ShoppingBag, Clock, TrendingUp, ArrowRight, Eye, X, User, Package, Truck } from 'lucide-react';
+import { DollarSign, ShoppingBag, Clock, TrendingUp, ArrowRight, Eye, X, User, Package, Truck, Store } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import type { Sale } from '../types';
@@ -288,6 +288,60 @@ export const Dashboard: React.FC = () => {
                                 <p className="text-gray-900 mt-2">
                                     {selectedSale.deliveryMethod === 'PICKUP' ? 'Recoger en Tienda' : 'Envío a Domicilio'}
                                 </p>
+
+                                {/* Mixed Delivery Info */}
+                                {selectedSale.items && (
+                                    <div className="mt-3 space-y-3">
+                                        {/* Pickup Section */}
+                                        {selectedSale.items.some(i => i.product?.availabilityType !== 'MANUFACTURING' && selectedSale.deliveryMethod === 'PICKUP') && (
+                                            <div className="bg-white p-3 rounded border border-blue-100">
+                                                <div className="flex items-center gap-2 text-sm font-semibold text-blue-800 mb-2">
+                                                    <Store className="h-4 w-4" />
+                                                    Retirar en Tienda
+                                                </div>
+                                                <ul className="text-sm text-gray-600 list-disc list-inside">
+                                                    {selectedSale.items
+                                                        .filter(i => i.product?.availabilityType !== 'MANUFACTURING')
+                                                        .map((item, idx) => (
+                                                            <li key={idx}>
+                                                                {item.productId} (x{item.quantity})
+                                                            </li>
+                                                        ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {/* Dispatch Section */}
+                                        {selectedSale.items.some(i => selectedSale.deliveryMethod === 'DISPATCH' || i.product?.availabilityType === 'MANUFACTURING') && (
+                                            <div className="bg-white p-3 rounded border border-purple-100">
+                                                <div className="flex items-center gap-2 text-sm font-semibold text-purple-800 mb-2">
+                                                    <Truck className="h-4 w-4" />
+                                                    Envío a Domicilio
+                                                </div>
+                                                <ul className="text-sm text-gray-600 list-disc list-inside mb-2">
+                                                    {selectedSale.items
+                                                        .filter(i => selectedSale.deliveryMethod === 'DISPATCH' || i.product?.availabilityType === 'MANUFACTURING')
+                                                        .map((item, idx) => (
+                                                            <li key={idx}>
+                                                                {item.productId} (x{item.quantity})
+                                                                {item.product?.availabilityType === 'MANUFACTURING' && (
+                                                                    <span className="text-xs ml-2 text-purple-600 font-medium">
+                                                                        (Fabricación: {item.product.estimatedDays} días)
+                                                                    </span>
+                                                                )}
+                                                            </li>
+                                                        ))}
+                                                </ul>
+                                                {selectedSale.deliveryDate && (
+                                                    <div className="text-sm text-purple-900 border-t border-purple-100 pt-2 mt-2">
+                                                        <span className="font-semibold">Entrega estimada: </span>
+                                                        {new Date(selectedSale.deliveryDate).toLocaleDateString()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Items */}

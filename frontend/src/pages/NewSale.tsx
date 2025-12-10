@@ -3,7 +3,7 @@ import { ProductSearch } from '../components/sales/ProductSearch';
 import { Cart } from '../components/sales/Cart';
 import { createSale } from '../services/api';
 import type { Product, CartItem } from '../types';
-import { X, User, CreditCard } from 'lucide-react';
+import { X, User, CreditCard, Truck, Store } from 'lucide-react';
 
 interface Person {
     id: string;
@@ -161,9 +161,9 @@ export const NewSale: React.FC = () => {
             alert(message);
             setCartItems([]);
             handleCloseCheckout();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating sale:', error);
-            alert('Error al crear la venta');
+            alert(error.message || 'Error al crear la venta');
         } finally {
             setIsProcessing(false);
         }
@@ -261,103 +261,135 @@ export const NewSale: React.FC = () => {
                                     </button>
                                 </div>
 
-                                {/* Delivery Date Information */}
-                                {deliveryMethod === 'DISPATCH' && selectedPersonId && (
-                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                        {isCheckingDelivery ? (
-                                            <div className="flex items-center text-blue-700">
-                                                <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Consultando disponibilidad de entrega...
+                                {/* Delivery Details */}
+                                <div className="space-y-4">
+                                    {/* Pickup Items */}
+                                    {cartItems.some(i => i.availabilityType !== 'MANUFACTURING') && deliveryMethod === 'PICKUP' && (
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                            <div className="flex items-center gap-2 mb-2 text-blue-800 font-semibold">
+                                                <Store className="h-5 w-5" />
+                                                <span>Retiro en Tienda</span>
                                             </div>
-                                        ) : deliveryDate ? (
-                                            <div className="text-blue-700">
-                                                <div className="font-semibold mb-2">📦 Detalles de Entrega:</div>
-
-                                                <div className="grid grid-cols-1 gap-2 text-sm mb-3">
-                                                    <div className="flex items-start gap-2">
-                                                        <span className="font-medium min-w-[70px]">Dirección:</span>
-                                                        <span>{persons.find(p => p.id === selectedPersonId)?.address}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium min-w-[70px]">Teléfono:</span>
-                                                        <span>{persons.find(p => p.id === selectedPersonId)?.phone || 'No registrado'}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="border-t border-blue-200 pt-2">
-                                                    <div className="font-medium text-sm text-blue-800">Fecha estimada:</div>
-                                                    <div className="text-lg font-bold">
-                                                        {new Date(deliveryDate).toLocaleDateString('es-ES', {
-                                                            weekday: 'long',
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric'
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-blue-700">
-                                                Selecciona un cliente para ver la fecha de entrega
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Order Summary */}
-                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <h3 className="font-semibold text-gray-900 mb-3">Resumen del Pedido</h3>
-                                <div className="space-y-2">
-                                    {cartItems.map((item) => (
-                                        <div key={item.productId} className="flex justify-between text-sm">
-                                            <span className="text-gray-600">
-                                                {item.productName} x {item.quantity}
-                                            </span>
-                                            <span className="text-gray-900 font-medium">
-                                                ${item.subtotal.toLocaleString()}
-                                            </span>
+                                            <p className="text-sm text-blue-700 mb-2">
+                                                Los siguientes productos están disponibles para retirar inmediatamente:
+                                            </p>
+                                            <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
+                                                {cartItems
+                                                    .filter(i => i.availabilityType !== 'MANUFACTURING')
+                                                    .map(item => (
+                                                        <li key={item.productId}>{item.productName} (x{item.quantity})</li>
+                                                    ))}
+                                            </ul>
                                         </div>
-                                    ))}
-                                    <div className="border-t border-gray-300 pt-2 mt-2">
-                                        <div className="flex justify-between font-bold text-lg">
-                                            <span className="text-gray-900">Total</span>
-                                            <span className="text-gray-900">
-                                                ${calculateTotal().toLocaleString()}
-                                            </span>
+                                    )}
+
+                                    {/* Dispatch Items (Manufacturing or Selected Dispatch) */}
+                                    {(deliveryMethod === 'DISPATCH' || cartItems.some(i => i.availabilityType === 'MANUFACTURING')) && (
+                                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                            <div className="flex items-center gap-2 mb-2 text-purple-800 font-semibold">
+                                                <Truck className="h-5 w-5" />
+                                                <span>Envío a Domicilio</span>
+                                            </div>
+
+                                            {deliveryMethod === 'PICKUP' && (
+                                                <p className="text-sm text-purple-700 mb-2 font-medium">
+                                                    Los siguientes productos requieren fabricación y serán enviados a tu domicilio:
+                                                </p>
+                                            )}
+
+                                            <ul className="list-disc list-inside text-sm text-purple-700 space-y-1 mb-3">
+                                                {cartItems
+                                                    .filter(i => deliveryMethod === 'DISPATCH' || i.availabilityType === 'MANUFACTURING')
+                                                    .map(item => (
+                                                        <li key={item.productId}>
+                                                            {item.productName} (x{item.quantity})
+                                                            {item.availabilityType === 'MANUFACTURING' && (
+                                                                <span className="text-xs ml-2 bg-purple-200 px-2 py-0.5 rounded text-purple-800">
+                                                                    Fabricación ({item.availability?.estimatedDays} días)
+                                                                </span>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                            </ul>
+
+                                            {/* Delivery Date Calculation Display */}
+                                            {selectedPersonId && (
+                                                <div className="border-t border-purple-200 pt-2 mt-2">
+                                                    {isCheckingDelivery ? (
+                                                        <div className="flex items-center text-purple-700 text-sm">
+                                                            <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            Calculando fecha de entrega...
+                                                        </div>
+                                                    ) : deliveryDate ? (
+                                                        <div className="text-sm text-purple-900">
+                                                            <span className="font-semibold">Fecha estimada de entrega: </span>
+                                                            {new Date(deliveryDate).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-sm text-purple-700 italic">
+                                                            Calculando fecha según dirección del cliente...
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Order Summary */}
+                                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <h3 className="font-semibold text-gray-900 mb-3">Resumen del Pedido</h3>
+                                    <div className="space-y-2">
+                                        {cartItems.map((item) => (
+                                            <div key={item.productId} className="flex justify-between text-sm">
+                                                <span className="text-gray-600">
+                                                    {item.productName} x {item.quantity}
+                                                </span>
+                                                <span className="text-gray-900 font-medium">
+                                                    ${item.subtotal.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        <div className="border-t border-gray-300 pt-2 mt-2">
+                                            <div className="flex justify-between font-bold text-lg">
+                                                <span className="text-gray-900">Total</span>
+                                                <span className="text-gray-900">
+                                                    ${calculateTotal().toLocaleString()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50">
-                            <button
-                                type="button"
-                                onClick={handleCloseCheckout}
-                                className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleConfirmSale('PENDING')}
-                                disabled={isProcessing || !selectedPersonId}
-                                className="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                            >
-                                {isProcessing ? 'Guardando...' : 'Guardar como Pendiente'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleConfirmSale('COMPLETED')}
-                                disabled={isProcessing || !selectedPersonId}
-                                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                            >
-                                {isProcessing ? 'Finalizando...' : 'Finalizar Venta'}
-                            </button>
+                            <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseCheckout}
+                                    className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleConfirmSale('PENDING')}
+                                    disabled={isProcessing || !selectedPersonId}
+                                    className="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                >
+                                    {isProcessing ? 'Guardando...' : 'Guardar como Pendiente'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleConfirmSale('COMPLETED')}
+                                    disabled={isProcessing || !selectedPersonId}
+                                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                >
+                                    {isProcessing ? 'Finalizando...' : 'Finalizar Venta'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

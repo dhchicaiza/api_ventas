@@ -32,6 +32,7 @@ model Sale {
   items          SaleItem[]
   createdAt      DateTime    @default(now())
   expiresAt      DateTime?
+  deliveryDate   DateTime?
 }
 
 model SaleItem {
