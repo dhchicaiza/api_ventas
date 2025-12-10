@@ -125,7 +125,7 @@ export const Store: React.FC = () => {
                     unitPrice: item.price
                 })),
                 deliveryMethod: 'DISPATCH', // Default to dispatch for online store
-                status: 'PENDING', // Online orders start as pending
+                status: 'COMPLETED', // Online orders are now completed immediately
                 deliveryDate: deliveryDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // Use checked date or estimated 3 days
                 customer: {
                     name: formData.name,

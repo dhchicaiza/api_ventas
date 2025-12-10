@@ -36,7 +36,7 @@ model Sale {
 
 model SaleItem {
   id        String  @id @default(uuid())
-  sale      Sale    @relation(fields: [saleId], references: [id])
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
   productId String
   quantity  Int

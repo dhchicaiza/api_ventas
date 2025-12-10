@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RESPUESTAS_EQUIPO_INVENTARIO.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="respuestas-para-el-equipo-de-inventarios">Respuestas para el Equipo de Inventarios</h1>
+<p><strong>Fecha:</strong> 2025-12-09<br>
+<strong>Contexto:</strong> Clarificaciones sobre el flujo de reservas y estados de stock</p>
+<hr>
+<h2 id="pregunta-1-manejo-del-tiempo-de-reserva">Pregunta 1: Manejo del tiempo de reserva</h2>
+<blockquote>
+<p><em>&quot;Al hacer reserva, ustedes manejarían lo del tiempo, que lo que necesitan es un endpoint para pasar de reservado a disponible los valores, cierto?&quot;</em></p>
+</blockquote>
+<h3 id="respuesta">Respuesta</h3>
+<p>✅ <strong>Correcto.</strong> Nosotros manejamos el tiempo de expiración de la reserva (15 minutos).</p>
+<p>Lo que necesitamos de ustedes es:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Propósito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /reservations</code></td>
+<td>Crear reserva (pasar de disponible → reservado)</td>
+</tr>
+<tr>
+<td><code>POST /reservations/{id}/confirm</code></td>
+<td>Confirmar compra (descontar del stock definitivamente)</td>
+</tr>
+<tr>
+<td><code>DELETE /reservations/{id}</code></td>
+<td>Liberar reserva (pasar de reservado → disponible)</td>
+</tr>
+</tbody>
+</table>
+<p>Cuando nuestra reserva expire (timeout de 15 min) o el cliente cancele, nosotros llamamos al <code>DELETE</code> para que ustedes pasen esos productos de <strong>reservado → disponible</strong>.</p>
+<hr>
+<h2 id="pregunta-2-pickup-recoger-en-local--reserva">Pregunta 2: PICKUP (Recoger en local) + Reserva</h2>
+<blockquote>
+<p><em>&quot;Cuando se selecciona recoger en el local y luego se reserva, los productos se van a reservado. Pero cuando se confirma la compra, estos se descuentan directamente de reservado (Sin pasar por despacho ni nada de eso)&quot;</em></p>
+</blockquote>
+<h3 id="respuesta">Respuesta</h3>
+<p>✅ <strong>Exactamente correcto.</strong></p>
+<pre class="hljs"><code><div>PICKUP + PENDING → Reservado
+PICKUP + COMPLETED → Descontar de stock (sin despacho)
+</div></code></pre>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart LR
+    A[Disponible] -->|Crear reserva| B[Reservado]
+    B -->|Cliente confirma| C[Descontado del stock]
+    B -->|Timeout/Cancela| A
+</div></code></pre>
+<p><strong>No hay interacción con API de Despachos</strong> en este caso. Solo necesitamos que ustedes:</p>
+<ol>
+<li>Al crear reserva: muevan la cantidad a &quot;reservado&quot;</li>
+<li>Al confirmar: descuenten del stock total (el producto ya no está ni disponible ni reservado)</li>
+</ol>
+<hr>
+<h2 id="pregunta-3-dispatch-env%C3%ADo-a-domicilio--reserva">Pregunta 3: DISPATCH (Envío a domicilio) + Reserva</h2>
+<blockquote>
+<p><em>&quot;Cuando se selecciona la compra online y luego se reserva el producto. Cuando se confirma la compra, ¿qué sucede? ¿Se descuenta de reservado directamente? ¿O se pasa a despacho?&quot;</em></p>
+</blockquote>
+<h3 id="respuesta">Respuesta</h3>
+<p>Desde la perspectiva de <strong>inventario</strong>, el comportamiento es <strong>idéntico al PICKUP</strong>:</p>
+<p>✅ Se descuenta del stock al confirmar.</p>
+<pre class="hljs"><code><div>DISPATCH + PENDING → Reservado
+DISPATCH + COMPLETED → Descontar de stock
+</div></code></pre>
+<p><strong>La diferencia:</strong> Después de confirmar con ustedes (Inventario), <strong>nosotros</strong> hacemos una segunda llamada a la <strong>API de Despachos</strong> para crear la orden de envío. Pero esto es transparente para ustedes.</p>
+<pre><code class="language-mermaid"><div class="mermaid">sequenceDiagram
+    participant VE as API Ventas
+    participant IN as API Inventario
+    participant DE as API Despachos
+    
+    Note over VE,IN: Esto les incumbe a ustedes
+    VE->>IN: POST /reservations/{id}/confirm
+    IN-->>VE: {status: CONFIRMED, stock descontado}
+    
+    Note over VE,DE: Esto NO les incumbe
+    VE->>DE: POST /api/despachos
+    DE-->>VE: {id_despacho, numero_seguimiento}
+</div></code></pre>
+<p><strong>Resumen para ustedes (Inventario):</strong></p>
+<ul>
+<li>No necesitan saber si es PICKUP o DISPATCH</li>
+<li>Solo descuenten del stock cuando les llamemos al <code>confirm</code></li>
+<li>El &quot;despacho&quot; es un proceso aparte que manejamos nosotros con otro equipo</li>
+</ul>
+<hr>
+<h2 id="resumen-lo-que-necesitamos-de-inventario">Resumen: Lo que necesitamos de Inventario</h2>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Endpoint</th>
+<th>Qué hacer con el stock</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cliente agrega al carrito</td>
+<td><code>POST /reservations</code></td>
+<td>Disponible → Reservado</td>
+</tr>
+<tr>
+<td>Cliente confirma compra</td>
+<td><code>POST /reservations/{id}/confirm</code></td>
+<td>Reservado → Vendido (descontar)</td>
+</tr>
+<tr>
+<td>Reserva expira o cancela</td>
+<td><code>DELETE /reservations/{id}</code></td>
+<td>Reservado → Disponible</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="pregunta-adicional-para-ustedes">Pregunta adicional para ustedes</h2>
+<p>¿Necesitan algún dato adicional en las llamadas para diferenciar PICKUP vs DISPATCH?</p>
+<p>De nuestra parte podemos enviarles un campo <code>deliveryMethod</code> en el metadata si les sirve para reportes o tracking, pero funcionalmente no debería cambiar el comportamiento del stock.</p>
+
+</body>
+</html>
