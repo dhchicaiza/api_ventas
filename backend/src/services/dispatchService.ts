@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const DISPATCH_API_URL = process.env.DISPATCH_API_URL || 'http://localhost:3002';
+const DISPATCH_API_URL = process.env.DISPATCH_API_URL;
 
 /**
  * Interface for delivery availability response
+ * (Esto puede venir de otra API mock, no del microservicio real de despachos)
  */
 export interface DeliveryAvailability {
     available: boolean;
@@ -12,7 +13,7 @@ export interface DeliveryAvailability {
 }
 
 /**
- * Interface for dispatch creation request
+ * Interface for dispatch creation request (estructura interna de Ventas)
  */
 export interface CreateDispatchRequest {
     saleId: string;
@@ -29,34 +30,31 @@ export interface CreateDispatchRequest {
 }
 
 /**
- * Interface for dispatch creation response
+ * Interface for dispatch creation response (lo que Sales manejará)
  */
 export interface CreateDispatchResponse {
-    dispatchId: string;
-    status: string;
-    trackingNumber?: string;
+    dispatchId: string;           // Será el orden_id devuelto por Despachos
+    status: string;               // "despacho" o el estado que retorne
+    trackingNumber?: string;      // Se usa mismo orden_id (no existe tracking real)
     estimatedDeliveryDate: string;
 }
 
 /**
- * Check delivery availability for a given address
- * 
- * @param address - Customer delivery address
- * @returns Delivery availability information
+ * Simulación de disponibilidad de entrega.
+ * Este NO depende del microservicio real de Despachos.
  */
 export const checkDeliveryAvailability = async (address: string): Promise<DeliveryAvailability> => {
     try {
         const response = await axios.post(`${DISPATCH_API_URL}/api/dispatch/check-availability`, {
             address,
         });
-
         return response.data;
     } catch (error) {
         console.error('Error checking delivery availability:', error);
 
-        // Fallback: return mock data if dispatch API is not available
+        // Fallback simple. NO afecta al despacho real.
         const estimatedDate = new Date();
-        estimatedDate.setDate(estimatedDate.getDate() + 3); // 3 days from now
+        estimatedDate.setDate(estimatedDate.getDate() + 3);
 
         return {
             available: true,
@@ -67,14 +65,15 @@ export const checkDeliveryAvailability = async (address: string): Promise<Delive
 };
 
 /**
- * Create a dispatch record in the dispatch system
- * 
- * @param dispatchData - Dispatch creation data
- * @returns Dispatch creation response with tracking info
+ * Crea una orden de despacho en el microservicio real.
+ * IMPORTANTE:
+ * - Solo existe POST /api/ordenes
+ * - Debemos usar orden_id como ID real del despacho
+ * - NO se deben inventar datos en fallback
  */
 export const createDispatch = async (dispatchData: CreateDispatchRequest): Promise<CreateDispatchResponse> => {
     try {
-        // Transform data to match dispatch team's expected format
+        // Adaptación al formato EXACTO del microservicio de Despachos
         const dispatchPayload = {
             id_venta: dispatchData.saleId,
             cliente_nombre: dispatchData.customerName,
@@ -85,44 +84,32 @@ export const createDispatch = async (dispatchData: CreateDispatchRequest): Promi
                 nombre: item.description || item.productId,
                 cantidad: item.quantity
             })),
-            fecha_estimada_envio: new Date(dispatchData.deliveryDate).toISOString().split('T')[0] // Format: YYYY-MM-DD
+            fecha_estimada_envio: new Date(dispatchData.deliveryDate).toISOString().split('T')[0],
+            estado: "pendiente" // Puede ser ignorado por Despachos si decide cambiarlo
         };
 
-        const response = await axios.post(`${DISPATCH_API_URL}/api/despachos`, dispatchPayload);
+        const response = await axios.post(`${DISPATCH_API_URL}/api/ordenes`, dispatchPayload);
 
+        // Adaptación de la respuesta real
         return {
-            dispatchId: response.data.id_despacho || `DISPATCH-${Date.now()}`,
-            status: response.data.estado || 'PENDING',
-            trackingNumber: response.data.numero_seguimiento || `TRK-${Date.now()}`,
+            dispatchId: response.data.orden_id.toString(),
+            status: response.data.estado,
+            trackingNumber: response.data.orden_id.toString(),  // NO existe tracking real
             estimatedDeliveryDate: dispatchData.deliveryDate,
         };
+
     } catch (error) {
         console.error('Error creating dispatch:', error);
 
-        // Fallback: return mock data if dispatch API is not available
-        const estimatedDate = new Date(dispatchData.deliveryDate);
-
-        return {
-            dispatchId: `DISPATCH-${Date.now()}`,
-            status: 'PENDING',
-            trackingNumber: `TRK-${Date.now()}`,
-            estimatedDeliveryDate: estimatedDate.toISOString(),
-        };
+        // NO se debe inventar un despacho si el servicio real está caído
+        throw new Error("Dispatch service unavailable. The order dispatch could not be created.");
     }
 };
 
 /**
- * Get dispatch status by dispatch ID
- * 
- * @param dispatchId - Dispatch ID to query
- * @returns Dispatch status information
+ * NO EXISTE endpoint para consultar despacho en el microservicio real.
+ * Este método queda deshabilitado para evitar mal uso.
  */
-export const getDispatchStatus = async (dispatchId: string) => {
-    try {
-        const response = await axios.get(`${DISPATCH_API_URL}/api/dispatch/${dispatchId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting dispatch status:', error);
-        return null;
-    }
+export const getDispatchStatus = async () => {
+    throw new Error("Dispatch tracking is not supported. The dispatch system only allows creation.");
 };

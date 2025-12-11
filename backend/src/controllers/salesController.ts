@@ -213,9 +213,7 @@ export const createSale = async (req: Request, res: Response) => {
                 // Continuar aunque falle la actualización de inventario
             }
 
-            // 8b. Crear solicitud de Despacho (PENDIENTE - esperando API real de despachos)
-            // TODO: Descomentar cuando la API real de despachos esté disponible
-            /*
+            // 8b. Crear solicitud de Despacho en el microservicio REAL
             try {
                 const { createDispatch } = await import('../services/dispatchService');
 
@@ -225,7 +223,7 @@ export const createSale = async (req: Request, res: Response) => {
                     customerPhone: person.phone || undefined,
                     customerAddress: person.address,
                     customerEmail: person.email,
-                    deliveryDate: data.deliveryDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    deliveryDate: calculatedDeliveryDate || new Date().toISOString(),
                     items: data.items.map(item => ({
                         productId: item.productId,
                         quantity: item.quantity,
@@ -234,18 +232,17 @@ export const createSale = async (req: Request, res: Response) => {
 
                 const dispatchResponse = await createDispatch(dispatchData);
 
-                // Actualizar venta con ID de despacho
+                // Guardar el orden_id generado por Despachos como dispatchId en la venta
                 await prisma.sale.update({
                     where: { id: sale.id },
                     data: { dispatchId: dispatchResponse.dispatchId },
                 });
 
-                console.log('Dispatch created:', dispatchResponse.dispatchId);
+                console.log('[DESPACHO] Despacho creado con ID:', dispatchResponse.dispatchId);
             } catch (error) {
-                console.error('Error creating dispatch:', error);
+                console.error('[DESPACHO] Error al crear despacho. La venta fue creada pero sin despacho asociado.');
             }
-            */
-            console.log('[DESPACHO] Servicio de despacho pendiente - esperando API real');
+
         }
 
         // Incluir información de fabricación en la respuesta si aplica
