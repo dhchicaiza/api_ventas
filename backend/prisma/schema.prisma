@@ -39,9 +39,10 @@ model SaleItem {
   id        String  @id @default(uuid())
   sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   saleId    String
-  productId String
-  quantity  Int
-  unitPrice Decimal
+  productId     String
+  quantity      Int
+  unitPrice     Decimal
+  reservationId String?
 }
 
 enum SaleStatus {
