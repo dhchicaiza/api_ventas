@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DISPATCH_API_URL = process.env.DISPATCH_API_URL || 'http://localhost:3002';
+const DISPATCH_API_URL = process.env.DISPATCH_API_URL;
 
 /**
  * Interface for delivery availability response
